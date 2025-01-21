@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
-static TEMPLATE_DB: &str = "\ntemp_group\ntemp,true";
+static TEMPLATE_DB: &str = "\ntemp_group\ntemp,true\n";
 
 //fn is_instance<T>(_: &T) -> String{
 //    return std::any::type_name::<T>().to_owned();
@@ -61,7 +61,6 @@ fn write_db(db: HashMap<String,HashMap<String,String>>) {
     };
     let path = Path::new(&db_file_name);
     let display = path.display();
-    println!("{}",db_str);
     let mut file: File = match File::create(&path) {
         Err(why) => panic!("couldn't create file {}: {}", display, why),
         Ok(file) => file,
@@ -102,19 +101,49 @@ fn load_db(db_name: &str) -> HashMap<String, HashMap<String, String>> {
         } else {
             names.push(value);
             if group.len() > 0 {
-                let index: usize = j - 1;
+                let index: usize = group.len()-1;
                 db.insert(names[index].to_string(), group.to_owned());
                 let mut _group: HashMap<String, String> = HashMap::new();
             }
         }
     }
-    let index: usize = j - 2;
+    let index: usize = names.len()-1;
     db.insert(names[index].to_string(), group.to_owned());
     return db;
 }
 
+fn read_data(db: HashMap<String,HashMap<String,String>>,group_name: String, data_name: String) -> String {
+    let data = if let Some(inner) = &db.get(&group_name) {
+        if let Some(value) = inner.get(&data_name) {
+            value
+        } else {
+            "undefined"
+        }
+    } else {
+        "undefined"
+    };
+    return data.to_string();
+}
+
+fn append_data(mut db: HashMap<String,HashMap<String,String>>,group_name: String, data_name: String, data: String) {
+    let inner = db.entry(group_name.clone()).or_insert_with(HashMap::new);
+    let temp_name: String = data_name.clone();
+    let temp_data: String = data+"\n";
+    inner.insert(temp_name, temp_data);
+    write_db(db);
+}
+
 fn main() {
     create_db("test");
+    //let db: HashMap<String,HashMap<String,String>> = load_db("test");
+    //write_db(db);
+    //let db: HashMap<String,HashMap<String,String>> = load_db("test");
+    //let data = read_data(db, "temp_group".to_string(), "temp".to_string());
+    //println!("{}",data);
     let db: HashMap<String,HashMap<String,String>> = load_db("test");
-    write_db(db);
+    append_data(db, "data".to_string(), "temp_data".to_string(), "false".to_string());
+    let db: HashMap<String,HashMap<String,String>> = load_db("test");
+    println!("{:?}",db);
+    let data: String = read_data(db, "data".to_string(), "temp_data".to_string());
+    println!("{}",data);
 }
