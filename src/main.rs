@@ -1,16 +1,10 @@
 use std::collections::HashMap;
 use std::fmt::Display;
-use std::fs::read_to_string;
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::Path;
 use std::sync::Arc;
 
 use serde::Deserialize;
 use serde::Serialize;
 use tokio::sync::RwLock;
-
-static TEMPLATE_DB: &str = "\ntemp_group\ntemp,true\n";
 
 // using a type allows us to leverage Serde to handle arbitrary information.
 type DbDataType = Vec<u8>;
