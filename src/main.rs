@@ -32,6 +32,28 @@ impl DB {
         };
     }
 
+    /// Rebuilds the database from a given byte slice.
+    /// 
+    /// Will raise an error if the provided slice is invalid.
+    pub fn from_slice(slice:&[u8]) -> Result<Self, Error> {
+        let internal_db_table = match rmp_serde::from_slice(slice) {
+            Ok(val) => val,
+            Err(_err) => return Err(Error::new("Could not decode slice."))
+        };
+
+        let access_controls = Arc::new(RwLock::new(internal_db_table));
+        return Ok(Self {
+            internal_db_table:access_controls
+        })
+    }
+
+    /// Serializes the current state of the DB into a byte array.
+    pub async fn to_vec(&self) -> Vec<u8> {
+        // if the lock is poisoned we need to unwrap.
+        // if the serialization fails we have really bad problems cause it shouldn't.
+        return rmp_serde::to_vec(&*self.internal_db_table.read().await).unwrap()
+    }
+
     /// Initializes a new DB table for write use.
     /// If this table already exists, does nothing.
     pub async fn create_new_table(&self, table_name: &str) {
